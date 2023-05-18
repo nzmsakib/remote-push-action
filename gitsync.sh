@@ -62,7 +62,7 @@ echo "$private_key" > ~/.ssh/$private_key_file
 chmod 600 ~/.ssh/$private_key_file
 ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts
 
-# get current repository
+# open the directory
 cd ~/$dir
 
 # check if git initialized
@@ -84,8 +84,16 @@ if [ "$is_git_initialized" = false ] || [ "$current_repo" != "$repo_ssh" ]; then
     # other scripts to run after clone
     # post-clone.sh is a script that is run after the clone which is in the repository
     if [ -e "post-clone.sh" ]; then
+        # Make the file executable
+        chmod +x post-clone.sh
+
         echo "Running post-clone script..."
         bash post-clone.sh
+
+        # Make the file not executable
+        chmod -x post-clone.sh
+    else
+        echo "No post-clone script found!"
     fi
     # finally done
     echo "Done!"
@@ -95,15 +103,26 @@ else
     git pull
     # other scripts to run after pull
     # post-pull.sh is a script that is run after the pull which is in the repository
+    # check if the file exists
     if [ -e "post-pull.sh" ]; then
+        # Make the file executable
+        chmod +x post-pull.sh
+
         echo "Running post-pull script..."
         bash post-pull.sh
+
+        # Make the file not executable
+        chmod -x post-pull.sh
+    else
+        echo "No post-pull script found!"
     fi
     echo "Done!"
 fi
 
 # remove the private key file and known hosts
+echo "Removing the private key..."
 rm ~/.ssh/$private_key_file ~/.ssh/known_hosts
+echo "Done!"
 
 # exit
 exit 0
