@@ -61,6 +61,22 @@ echo "Updating the private key..."
 echo "$private_key" > ~/.ssh/$private_key_file
 chmod 600 ~/.ssh/$private_key_file
 ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts
+echo "Done!"
+
+# make a zip backup of the $dir directory
+echo "Making a backup of the directory..."
+# get basename of the directory
+dirname=$(basename "$dir")
+
+# Generate datetime string
+datetime=$(date +%Y%m%d%H%M%S)
+
+# Zip file name with datetime appended
+zipfile="~/backup/$dirname-$datetime.zip"
+
+# Create the zip file
+zip -r "$zipfile" ~/$dir
+echo "Done!"
 
 # open the directory
 cd ~/$dir
