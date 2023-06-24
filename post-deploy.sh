@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
-# This script is executed after the repo is pulled.
-echo "Executing from post-pull.sh"
+# This script is executed after the deploy is success.
+echo "Executing from post-deploy.sh"
 
 # abort on errors
 set -e
@@ -15,6 +15,19 @@ set -e
 # echo Starting composer install
 # composer install
 # echo Composer install finished
+
+# create .env file
+# echo Creating .env file
+# cp .env.example .env
+# echo .env file created
+
+# generate key
+# echo Generating key
+# php artisan key:generate
+# echo Key generated
+
+# add database credentials
+# echo Please add database credentials to .env file and run php artisan migrate
 
 # migrate database if migrations have changed
 # echo Starting php artisan migrate

@@ -15,6 +15,9 @@ while [ $# -gt 0 ]; do
     --git=*)
       repo_ssh="${1#*=}"
       ;;
+    --b=*)
+      branch="${1#*=}"
+      ;;
     --dir=*)
       dir=${1#*=}
       ;;
@@ -44,6 +47,11 @@ if [ -z "$repo_ssh" ]; then
     exit 1
 fi
 
+# check if the branch is provided, if not set it to main
+if [ -z "$branch" ]; then
+    branch="main"
+fi
+
 # check if the directory is provided
 if [ -z "$dir" ]; then
     echo "Directory is not provided!"
@@ -52,7 +60,7 @@ fi
 
 # check if the directory exists
 if [[ ! -d ~/$dir ]]; then
-    echo "Directory does not exist!"
+    echo "Directory does not exist on the remote server!"
     exit 1
 fi
 
@@ -65,17 +73,14 @@ echo "Done!"
 
 # make a zip backup of the $dir directory
 echo "Making a backup of the directory..."
-# get basename of the directory
-dirname=$(basename "$dir")
-
 # Generate datetime string
 datetime=$(date +%Y%m%d%H%M%S)
 
 # Zip file name with datetime appended
-zipfile="~/backup/$dirname-$datetime.zip"
+zipfile="$dir-$datetime.zip"
 
 # Create the zip file
-zip -r "$zipfile" ~/$dir
+zip -r ~/$zipfile ~/$dir
 echo "Done!"
 
 # open the directory
@@ -92,52 +97,40 @@ fi
 
 # if not initialized or the repository is not the same as the provided one
 if [ "$is_git_initialized" = false ] || [ "$current_repo" != "$repo_ssh" ]; then
-    # Empty the directory
+    # Empty the directory but keep the directory itself
     cd ~ && rm -rf ~/$dir
+    mkdir ~/$dir
     # clone the repository in the directory
     echo "Cloning the repository..."
     git clone $repo_ssh ~/$dir && cd ~/$dir
-    # other scripts to run after clone
-    # post-clone.sh is a script that is run after the clone which is in the repository
-    if [ -e "post-clone.sh" ]; then
-        # Make the file executable
-        chmod +x post-clone.sh
-
-        echo "Running post-clone script..."
-        bash post-clone.sh
-
-        # Make the file not executable
-        chmod -x post-clone.sh
-    else
-        echo "No post-clone script found!"
-    fi
-    # finally done
-    echo "Done!"
+    # Checkout the branch
+    git checkout $branch
+    echo "Clone Done!"
     # otherwise pull the changes
 else
     echo "Pulling the changes..."
-    git pull
-    # other scripts to run after pull
-    # post-pull.sh is a script that is run after the pull which is in the repository
-    # check if the file exists
-    if [ -e "post-pull.sh" ]; then
-        # Make the file executable
-        chmod +x post-pull.sh
-
-        echo "Running post-pull script..."
-        bash post-pull.sh
-
-        # Make the file not executable
-        chmod -x post-pull.sh
-    else
-        echo "No post-pull script found!"
-    fi
+    git pull origin $branch
     echo "Done!"
+fi
+
+# Other scripts to run after the deploy 
+# check if the file exists
+if [ -e "post-deploy.sh" ]; then
+    # Make the file executable
+    chmod +x post-deploy.sh
+
+    echo "Running post-deploy script..."
+    bash post-deploy.sh
+
+    # Make the file not executable
+    chmod -x post-deploy.sh
+else
+    echo "No post-deploy script found!"
 fi
 
 # remove the private key file and known hosts
 echo "Removing the private key..."
-rm ~/.ssh/$private_key_file ~/.ssh/known_hosts
+rm ~/.ssh/$private_key_file
 echo "Done!"
 
 # exit
